@@ -5,14 +5,30 @@ import { defu } from 'defu'
 import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt } from 'jose'
 
-interface PartialAuthConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
+export interface AuthUserConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
+  /**
+   * The base URL of the application.
+   *
+   * @example
+   *
+   * ```ts
+   * {
+   *   basePath: `/api/auth`
+   * }
+   * ```
+   */
   basePath?: string
 }
 
 /**
  * Represents a default configuration for authjs
  */
-export interface DefaultAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
+export interface ResolvedAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
+  /**
+   * @default `/api/auth`
+   */
+  basePath: string
+
   /**
    * @default false
    */
@@ -22,11 +38,6 @@ export interface DefaultAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
    * @default true
    */
   trustHost: boolean
-
-  /**
-   * @default `/api/auth`
-   */
-  basePath: string
 
   /**
    * @default []
@@ -61,17 +72,15 @@ export interface DefaultAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
     generateSessionToken: () => string
   }
 
-  jwt: Partial<JWTOptions> & {
-    maxAge: number
-  }
+  jwt: JWTOptions
 
   callbacks: CallbacksOptions
 }
 
 /**
- * Create a new {@link DefaultAuthConfig} object.
+ * Create a new {@link ResolvedAuthConfig} object.
  */
-export function defineAuthConfig(config: PartialAuthConfig, ...defaults: PartialAuthConfig[]): DefaultAuthConfig {
+export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserConfig[]): ResolvedAuthConfig {
   const options = defu(config || {}, ...defaults)
 
   const SING_IN_PAGE = '/sign-in'
@@ -225,7 +234,9 @@ async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
 
 async function decode<Payload = JWT>(params: JWTDecodeParams): Promise<Payload | null> {
   const { token, secret, salt } = params
-  if (!token) { return null }
+  if (!token) {
+    return null
+  }
   const encryptionSecret = await getDerivedEncryptionKey(secret, salt)
   const { payload } = await jwtDecrypt(token, encryptionSecret, {
     clockTolerance: 15,

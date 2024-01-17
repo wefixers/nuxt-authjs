@@ -5,7 +5,7 @@ import type { AuthConfig, Awaitable } from '@auth/core/types'
 
 import { Auth } from '@auth/core'
 
-import type { DefaultAuthConfig } from './config'
+import type { ResolvedAuthConfig } from './config'
 import { defineAuthConfig } from './config'
 
 import { useRuntimeConfig } from '#imports'
@@ -28,7 +28,7 @@ declare module 'h3' {
      * The global {@link PrismaClient} instance.
      */
     readonly $auth?: {
-      readonly options: DefaultAuthConfig
+      readonly options: ResolvedAuthConfig
     }
   }
 }

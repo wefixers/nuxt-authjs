@@ -2,7 +2,7 @@ import { eventHandler, toWebRequest } from 'h3'
 import { Auth } from '@auth/core'
 import { serialize } from 'cookie-es'
 
-import type { NuxtAuthConfig } from '../../index'
+import type { ResolvedAuthConfig } from '../../config'
 
 export default eventHandler(async (event) => {
   const options = event.context.$auth?.options
@@ -44,7 +44,7 @@ function isCredentialsCallback(req: Request) {
   return pathname.endsWith('/callback/credentials')
 }
 
-async function handleCredentialsCallback(request: Request, config: NuxtAuthConfig) {
+async function handleCredentialsCallback(request: Request, config: ResolvedAuthConfig) {
   let userId: string | undefined
 
   config = {
