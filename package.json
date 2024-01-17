@@ -1,11 +1,11 @@
 {
   "name": "@fixers/nuxt-authjs",
   "type": "module",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "A Nuxt module for authjs",
   "author": "Luca <git@lucacicada.me>",
   "license": "MIT",
-  "repository": "https://github.com/wefixers/nuxt-stripe",
+  "repository": "https://github.com/wefixers/nuxt-authjs",
   "exports": {
     ".": {
       "types": "./dist/types.d.ts",
