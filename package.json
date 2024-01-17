@@ -1,0 +1,54 @@
+{
+  "name": "@fixers/nuxt-authjs",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "A Nuxt module for authjs",
+  "author": "Luca <git@lucacicada.me>",
+  "license": "MIT",
+  "repository": "https://github.com/wefixers/nuxt-stripe",
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    },
+    "./server": {
+      "types": "./dist/runtime/server/index.d.ts",
+      "import": "./dist/runtime/server/index.mjs"
+    }
+  },
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepack": "nuxt-module-build build",
+    "dev": "nuxi dev playground",
+    "dev:build": "nuxi build playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
+    "release": "npm run lint && npm run test && npm run prepack && changelogen --release && npm publish && git push --follow-tags",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
+  },
+  "dependencies": {
+    "@auth/core": "^0.20.0",
+    "@nuxt/kit": "^3.9.1",
+    "defu": "^6.1.4",
+    "pathe": "^1.1.1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^2.6.2",
+    "@nuxt/devtools": "latest",
+    "@nuxt/eslint-config": "^0.2.0",
+    "@nuxt/module-builder": "^0.5.5",
+    "@nuxt/schema": "^3.9.1",
+    "@nuxt/test-utils": "^3.9.0",
+    "@types/node": "^20.10.7",
+    "changelogen": "^0.5.5",
+    "eslint": "^8.56.0",
+    "nuxt": "^3.9.1",
+    "vitest": "^1.1.3"
+  }
+}
