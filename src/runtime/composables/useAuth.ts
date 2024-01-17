@@ -93,7 +93,7 @@ export function useAuth(nuxtApp?: NuxtApp) {
       loading.value = true
 
       try {
-        const res = await $fetch.raw('/api/auth/session', { headers })
+        const res = await $fetch.raw<Session | null>('/api/auth/session', { headers })
 
         // Send the cookie back to the client
         // see: https://nuxt.com/docs/getting-started/data-fetching#pass-cookies-from-server-side-api-calls-on-ssr-response
@@ -132,9 +132,9 @@ export function useAuth(nuxtApp?: NuxtApp) {
 
       const _signInUrl = `${signInUrl}`
 
-      const { csrfToken } = await $fetch('/api/auth/csrf')
+      const { csrfToken } = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
 
-      const response = await $fetch(_signInUrl, {
+      const response = await $fetch<{ url?: string }>(_signInUrl, {
         method: 'post',
         body: new URLSearchParams({
           ...options,
