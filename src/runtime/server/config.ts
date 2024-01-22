@@ -221,7 +221,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
 const now = () => (Date.now() / 1000) | 0
 
-async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
+export async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
   const { token = {}, secret, maxAge = DEFAULT_MAX_AGE, salt } = params
   const encryptionSecret = await getDerivedEncryptionKey(secret, salt)
   return await new EncryptJWT(token as any)
@@ -232,7 +232,7 @@ async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
     .encrypt(encryptionSecret)
 }
 
-async function decode<Payload = JWT>(params: JWTDecodeParams): Promise<Payload | null> {
+export async function decode<Payload = JWT>(params: JWTDecodeParams): Promise<Payload | null> {
   const { token, secret, salt } = params
   if (!token) {
     return null
