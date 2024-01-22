@@ -1,11 +1,12 @@
 import type { JWT, JWTDecodeParams, JWTEncodeParams, JWTOptions } from '@auth/core/jwt'
 import type { Provider } from '@auth/core/providers'
-import type { AuthConfig as AuthCoreConfig, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
+import type { AuthConfig, AuthConfig as AuthCoreConfig, Awaitable, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
+import type { AdapterUser } from '@auth/core/adapters'
 import { defu } from 'defu'
 import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt } from 'jose'
 
-export interface AuthUserConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
+export interface AuthUserConfig<TUser> extends Omit<Partial<AuthCoreConfig>, 'raw'> {
   /**
    * The base URL of the application.
    *
@@ -18,6 +19,22 @@ export interface AuthUserConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
    * ```
    */
   basePath?: string
+
+  /**
+   * ### Default:
+   * ```js
+   * {
+   *   signIn: '/sign-in',
+   *   signOut: '/sign-out',
+   *   error: '/sign-in',
+   *   verifyRequest: '/sign-in?verify-request',
+   * }
+   */
+  pages?: Partial<PagesOptions>
+
+  callbacks?: Partial<AuthConfig['callbacks']> & {
+    formatUser?: (user: AdapterUser) => Awaitable<TUser>
+  }
 }
 
 /**
@@ -80,7 +97,7 @@ export interface ResolvedAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
 /**
  * Create a new {@link ResolvedAuthConfig} object.
  */
-export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserConfig[]): ResolvedAuthConfig {
+export function defineAuthConfig<TUser>(config: AuthUserConfig<TUser>, ...defaults: AuthUserConfig<TUser>[]): ResolvedAuthConfig {
   const options = defu(config || {}, ...defaults)
 
   const SING_IN_PAGE = '/sign-in'
@@ -122,7 +139,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
         },
       },
       callbackUrl: <CookieOption>{
-        name: `__Secure-auth.callback-url`,
+        name: `auth.callback-url`,
         ...options?.cookies?.callbackUrl,
         options: {
           httpOnly: true,
@@ -133,7 +150,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
         },
       },
       csrfToken: <CookieOption>{
-        name: `__Host-auth.csrf-token`,
+        name: `auth.csrf-token`,
         ...options?.cookies?.csrfToken,
         options: {
           httpOnly: true,
@@ -144,7 +161,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
         },
       },
       pkceCodeVerifier: <CookieOption>{
-        name: `__Secure-auth.pkce.code_verifier`,
+        name: `auth.pkce.code_verifier`,
         ...options?.cookies?.pkceCodeVerifier,
         options: {
           httpOnly: true,
@@ -156,7 +173,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
         },
       },
       state: <CookieOption>{
-        name: `__Secure-auth.state`,
+        name: `auth.state`,
         ...options?.cookies?.state,
         options: {
           httpOnly: true,
@@ -168,7 +185,7 @@ export function defineAuthConfig(config: AuthUserConfig, ...defaults: AuthUserCo
         },
       },
       nonce: <CookieOption>{
-        name: `__Secure-auth.nonce`,
+        name: `auth.nonce`,
         ...options?.cookies?.nonce,
         options: {
           httpOnly: true,
