@@ -14,7 +14,11 @@ export default authPlugin({
   providers: [
     Google,
     Credentials({
-      async authorize(_credentials) {
+      async authorize(credentials: any) {
+        if (!credentials.email?.includes('@')) {
+          throw new Error('Invalid credentials')
+        }
+
         const user = await prisma.user.findFirst()
 
         return user

@@ -4,14 +4,22 @@ definePageMeta({
 })
 
 const { data } = useAuth()
-const { signIn } = useAuth()
+const { signIn, signOut } = useAuth()
 
 async function signInWithGoogle() {
   await signIn('google')
 }
 
 async function signInWithCredentials() {
-  await signIn('credentials')
+  await signIn('credentials', {
+    email: 'test@example.com',
+  })
+}
+
+async function signInWithInvalidCredentials() {
+  await signIn('credentials', {
+    email: 'invalid',
+  })
 }
 
 async function trigger404() {
@@ -39,8 +47,16 @@ async function trigger4042() {
       Sign in Credentials
     </button>
 
+    <button @click="signInWithInvalidCredentials">
+      Sign in Invalid Credentials
+    </button>
+
     <button @click="signInWithGoogle">
       Sign in
+    </button>
+
+    <button @click="() => signOut()">
+      Sign out
     </button>
 
     <NuxtLink to="/dashboard">

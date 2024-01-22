@@ -3,7 +3,7 @@ definePageMeta({
   auth: true,
 })
 
-const { data } = useAuth()
+const { data, signOut } = useAuth()
 
 async function testProtectedRoute() {
   const { data } = await $fetch('/api/protected')
@@ -21,6 +21,10 @@ async function testProtectedRoute() {
 
     <button @click="testProtectedRoute">
       testProtectedRoute
+    </button>
+
+    <button @click="() => signOut()">
+      Sign out
     </button>
 
     <NuxtLink to="/sign-in">
