@@ -1,16 +1,35 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { BuiltInProviderType } from '@auth/core/providers'
+import type { OAuthProviderType, RedirectableProviderType } from '@auth/core/providers'
 
 import { appendResponseHeader } from 'h3'
 
 import type { NuxtApp } from '#app/nuxt'
 import type { Session } from '#auth'
 
-import { computed, navigateTo, useRequestEvent, useRequestHeaders, useState } from '#imports'
+import { computed, navigateTo, reloadNuxtApp, useRequestEvent, useRequestHeaders, useRouter, useState } from '#imports'
 
-type LiteralUnion<T extends U, U = string> = T | (U & Record<never, never>)
+interface SignInOptions extends Record<string, any> {
+  callbackUrl?: string
+  redirect?: boolean
+}
 
-export type SupportedProviders = LiteralUnion<BuiltInProviderType> | undefined
+export interface SignOutParams<R extends boolean = true> {
+  callbackUrl?: string
+  redirect?: R
+}
+
+declare type SignInAuthorizationParams =
+  | string
+  | string[][]
+  | Record<string, string>
+  | URLSearchParams
+
+interface SignInResponse {
+  ok: boolean
+  status: number
+  error: string | undefined
+  url: string | null
+}
 
 /**
  * Represents a session status.
@@ -54,9 +73,37 @@ export interface Auth {
    * - `unauthenticated`: The session was initialized, but the user is not authenticated, equivalent to `if (!data.value) {}`.
    */
   status: ComputedRef<SessionStatus>
+
+  getSession: () => Promise<Session | null>
+
+  signIn<P extends RedirectableProviderType>(
+    providerId: P,
+    options?: SignInOptions,
+    authorizationParams?: SignInAuthorizationParams
+  ): Promise<void>
+
+  signIn<P extends RedirectableProviderType>(
+    providerId: P,
+    options?: SignInOptions & { redirect: true },
+    authorizationParams?: SignInAuthorizationParams
+  ): Promise<void>
+
+  signIn<P extends RedirectableProviderType>(
+    providerId: P,
+    options?: SignInOptions & { redirect: false },
+    authorizationParams?: SignInAuthorizationParams
+  ): Promise<SignInResponse>
+
+  signIn<P extends OAuthProviderType>(
+    providerId: P,
+    options?: Omit<SignInOptions, 'redirect'>,
+    authorizationParams?: SignInAuthorizationParams,
+  ): Promise<void | SignInResponse>
+
+  signOut: (options?: SignOutParams) => Promise<void>
 }
 
-export function useAuth(nuxtApp?: NuxtApp) {
+export function useAuth(nuxtApp?: NuxtApp): Auth {
   const data = useState<Session | undefined | null>('auth:data', () => undefined)
 
   const hasInitialSession = computed(() => !!data.value)
@@ -86,6 +133,7 @@ export function useAuth(nuxtApp?: NuxtApp) {
     loading,
     lastRefreshedAt,
     status,
+
     getSession: async () => {
       const event = useRequestEvent(nuxtApp)
       const headers = useRequestHeaders(['cookie'])
@@ -123,18 +171,27 @@ export function useAuth(nuxtApp?: NuxtApp) {
       return data.value || null
     },
 
-    signIn: async (provider: SupportedProviders, options?: any) => {
-      const callbackUrl = `${window.location.origin}/dashboard`
+    signIn: async (provider: string, options?: Record<string, any>, authorizationParams?: SignInAuthorizationParams): Promise<any> => {
+      const { redirect = true } = options ?? {}
+      const callbackUrl = options?.callbackUrl ?? `${window.location.origin}/`
 
       const isCredentials = provider === 'credentials'
-      const basePath = '/api'
-      const signInUrl = `${basePath}/auth/${isCredentials ? 'callback' : 'signin'}/${provider}`
+      const isEmail = provider === 'email'
+      const isSupportingReturn = isCredentials || isEmail
 
-      const _signInUrl = `${signInUrl}`
+      let signInUrl = `/api/auth/${isCredentials ? 'callback' : 'signin'}/${provider}`
+      if (authorizationParams) {
+        signInUrl += `?${new URLSearchParams(authorizationParams)}`
+      }
 
-      const { csrfToken } = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
+      const csrf = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
+      const csrfToken = csrf?.csrfToken
 
-      const response = await $fetch<{ url?: string }>(_signInUrl, {
+      if (!csrfToken) {
+        throw new Error('CSRF token not found')
+      }
+
+      const response = await $fetch<{ url?: string }>(signInUrl, {
         method: 'post',
         body: new URLSearchParams({
           ...options,
@@ -146,10 +203,57 @@ export function useAuth(nuxtApp?: NuxtApp) {
         },
       })
 
-      if (response.url) {
-        await navigateTo(response.url, {
-          external: true,
-        })
+      if (isCredentials && !redirect) {
+        reloadNuxtApp({ persistState: true, force: true })
+      }
+
+      if (redirect || !isSupportingReturn) {
+        const to = response.url ?? callbackUrl
+
+        await navigateTo(to, { external: true })
+
+        // If url contains a hash, the browser does not reload the page. We reload manually
+        if (to?.includes('#')) {
+          reloadNuxtApp({ persistState: true, force: true })
+        }
+
+        return
+      }
+
+      return response
+    },
+
+    signOut: async (options?: SignOutParams) => {
+      const callbackUrl = options?.callbackUrl ?? window.location.href
+
+      const csrf = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
+      const csrfToken = csrf?.csrfToken
+
+      if (!csrfToken) {
+        throw new Error('CSRF token not found')
+      }
+
+      const response = await $fetch<{ url: string }>('/api/auth/signout', {
+        method: 'post',
+        headers: {
+          'X-Auth-Return-Redirect': '1',
+        },
+        body: new URLSearchParams({
+          csrfToken,
+          callbackUrl,
+        }),
+      })
+
+      data.value = null
+
+      // Navigate back to where we are.
+      const url = response?.url ?? callbackUrl
+
+      // await navigateTo(new URL(url).pathname, { replace: true })
+      await useRouter().push({ path: new URL(url).pathname, force: true })
+
+      if (url?.includes('#')) {
+        reloadNuxtApp({ persistState: true, force: true })
       }
     },
   }
