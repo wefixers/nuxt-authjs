@@ -2,7 +2,7 @@ import { eventHandler, toWebRequest } from 'h3'
 import { Auth } from '@auth/core'
 import { serialize } from 'cookie-es'
 
-import type { ResolvedAuthConfig } from '../../config'
+import type { ResolvedAuthConfig } from './config'
 
 export default eventHandler(async (event) => {
   const options = event.context.$auth?.options
@@ -18,9 +18,6 @@ export default eventHandler(async (event) => {
   }
 
   const request = toWebRequest(event)
-  if (request.url.includes('.js.map')) {
-    return
-  }
 
   let response
 
