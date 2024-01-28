@@ -11,10 +11,6 @@
       "types": "./dist/types.d.ts",
       "import": "./dist/module.mjs",
       "require": "./dist/module.cjs"
-    },
-    "./server": {
-      "types": "./dist/runtime/server/index.d.ts",
-      "import": "./dist/runtime/server/index.mjs"
     }
   },
   "types": "./dist/types.d.ts",
