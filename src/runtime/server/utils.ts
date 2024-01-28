@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, toWebRequest } from 'h3'
 
 import type { AuthConfig, Awaitable, Session } from '@auth/core/types'
 import { Auth } from '@auth/core'
