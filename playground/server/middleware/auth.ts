@@ -1,15 +1,9 @@
 import Google from '@auth/core/providers/google'
 import Credentials from '@auth/core/providers/credentials'
-
 import { PrismaAdapter } from '@auth/prisma-adapter'
-
 import { prisma } from '../../server/prisma'
-import { authPlugin } from '#auth'
 
-export default authPlugin({
-  pages: {
-    signIn: '/sign-in',
-  },
+export default defineAuthMiddleware({
   adapter: PrismaAdapter(prisma),
   providers: [
     Google,
@@ -25,14 +19,4 @@ export default authPlugin({
       },
     }),
   ],
-  callbacks: {
-    formatUser(user) {
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name || undefined,
-        image: user.image || undefined,
-      }
-    },
-  },
 })

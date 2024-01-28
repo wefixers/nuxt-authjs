@@ -1,7 +1,5 @@
-import { getSession } from '#auth'
-
 export default eventHandler(async (event) => {
-  const session = await getSession(event)
+  const session = await getServerSession(event)
 
   return {
     data: session,
