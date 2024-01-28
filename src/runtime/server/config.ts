@@ -1,11 +1,10 @@
 import type { JWT, JWTDecodeParams, JWTEncodeParams, JWTOptions } from '@auth/core/jwt'
 import type { Provider } from '@auth/core/providers'
-import type { AuthConfig, AuthConfig as AuthCoreConfig, Awaitable, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
-import type { AdapterUser } from '@auth/core/adapters'
+import type { AuthConfig as AuthCoreConfig, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
 import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt } from 'jose'
 
-export interface AuthUserConfig<TUser> extends Omit<Partial<AuthCoreConfig>, 'raw'> {
+export interface AuthUserConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
   /**
    * The base URL of the application.
    *
@@ -30,10 +29,6 @@ export interface AuthUserConfig<TUser> extends Omit<Partial<AuthCoreConfig>, 'ra
    * }
    */
   pages?: Partial<PagesOptions>
-
-  callbacks?: Partial<AuthConfig['callbacks']> & {
-    formatUser?: (user: AdapterUser) => Awaitable<TUser>
-  }
 }
 
 /**
@@ -96,7 +91,7 @@ export interface ResolvedAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
 /**
  * Create a new {@link ResolvedAuthConfig} object.
  */
-export function defineAuthConfig<TUser>(options?: AuthUserConfig<TUser>): ResolvedAuthConfig {
+export function resolveAuthConfig(options?: AuthUserConfig): ResolvedAuthConfig {
   const SING_IN_PAGE = '/sign-in'
   const VERIFY_REQUEST_PAGE = `${SING_IN_PAGE}?verify-request`
 
@@ -233,7 +228,6 @@ export function defineAuthConfig<TUser>(options?: AuthUserConfig<TUser>): Resolv
 }
 
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
-const now = () => (Date.now() / 1000) | 0
 
 export async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
   const { token = {}, secret, maxAge = DEFAULT_MAX_AGE, salt } = params
@@ -241,7 +235,7 @@ export async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
   return await new EncryptJWT(token as any)
     .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
     .setIssuedAt()
-    .setExpirationTime(now() + maxAge)
+    .setExpirationTime(((Date.now() / 1000) | 0) + maxAge)
     .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret)
 }

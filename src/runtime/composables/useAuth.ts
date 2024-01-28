@@ -76,29 +76,13 @@ export interface Auth {
 
   getSession: () => Promise<Session | null>
 
-  signIn<P extends RedirectableProviderType>(
-    providerId: P,
-    options?: SignInOptions,
-    authorizationParams?: SignInAuthorizationParams
-  ): Promise<void>
+  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions, authorizationParams?: SignInAuthorizationParams): Promise<void>
 
-  signIn<P extends RedirectableProviderType>(
-    providerId: P,
-    options?: SignInOptions & { redirect: true },
-    authorizationParams?: SignInAuthorizationParams
-  ): Promise<void>
+  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions & { redirect: true }, authorizationParams?: SignInAuthorizationParams): Promise<void>
 
-  signIn<P extends RedirectableProviderType>(
-    providerId: P,
-    options?: SignInOptions & { redirect: false },
-    authorizationParams?: SignInAuthorizationParams
-  ): Promise<SignInResponse>
+  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions & { redirect: false }, authorizationParams?: SignInAuthorizationParams): Promise<SignInResponse>
 
-  signIn<P extends OAuthProviderType>(
-    providerId: P,
-    options?: Omit<SignInOptions, 'redirect'>,
-    authorizationParams?: SignInAuthorizationParams,
-  ): Promise<void | SignInResponse>
+  signIn<P extends OAuthProviderType>(providerId: P, options?: Omit<SignInOptions, 'redirect'>, authorizationParams?: SignInAuthorizationParams,): Promise<void | SignInResponse>
 
   signOut: (options?: SignOutParams) => Promise<void>
 }
@@ -224,6 +208,7 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
     },
 
     signOut: async (options?: SignOutParams) => {
+
       const callbackUrl = options?.callbackUrl ?? window.location.href
 
       const csrf = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
