@@ -9,7 +9,7 @@ export interface ModuleOptions {
   /**
    * @default `/sign-in`
    */
-  signIn?: string
+  signIn: string
 
   /**
    * @default true
@@ -52,6 +52,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     const options = defu<ModuleOptions, [ModuleOptions]>(userOptions, {
       global: true,
+      signIn: '/sign-in',
       refreshPeriodically: false,
       refreshOnWindowFocus: false,
     })
@@ -59,7 +60,9 @@ export default defineNuxtModule<ModuleOptions>({
     const runtimeConfig = nuxt.options.runtimeConfig
 
     // Set the module options
-    runtimeConfig.auth = options as any
+    runtimeConfig.auth = defu(runtimeConfig.auth, {
+      signIn: options.signIn,
+    })
 
     // Be explicit on what we set publicly
     runtimeConfig.public.auth = defu(runtimeConfig.public.auth, {
