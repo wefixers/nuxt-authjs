@@ -3,6 +3,7 @@ import type { NitroApp } from 'nitropack'
 import type { AuthConfig, Awaitable, User } from '@auth/core/types'
 
 import { Auth } from '@auth/core'
+import { defu } from 'defu'
 
 import type { AuthUserConfig, ResolvedAuthConfig } from './config'
 import { defineAuthConfig } from './config'
@@ -32,7 +33,8 @@ export function authPlugin<TUser = User>(config: AuthPluginConfig<TUser>) {
       const runtimeConfig = useRuntimeConfig()
 
       const userConfig = typeof config === 'function' ? await config(event) : config
-      const options = defineAuthConfig(userConfig, {
+
+      const options = defineAuthConfig(defu(userConfig, {
         secret: runtimeConfig?.session?.password,
         cookies: {
           sessionToken: {
@@ -40,7 +42,10 @@ export function authPlugin<TUser = User>(config: AuthPluginConfig<TUser>) {
             options: runtimeConfig?.session?.cookie as any,
           },
         },
-      })
+        pages: {
+          signIn: runtimeConfig.auth?.signIn,
+        },
+      }))
 
       // delete options.raw
       // options.trustHost ??= true
@@ -113,4 +118,15 @@ export async function getSession(event: H3Event, options?: AuthConfig): Promise<
   }
 
   throw new Error(data.message)
+}
+
+export async function getServerSession(event: H3Event): Promise<any> {
+  let session = event.context.$authSession
+
+  if (typeof session === 'undefined') {
+    session = await getSession(event)
+    event.context.$authSession = session
+  }
+
+  return session
 }
