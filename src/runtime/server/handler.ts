@@ -1,5 +1,6 @@
 import { eventHandler, toWebRequest } from 'h3'
 import { Auth } from '@auth/core'
+import { CredentialsSignin } from '@auth/core/errors'
 import { serialize } from 'cookie-es'
 
 import type { ResolvedAuthConfig } from './config'
@@ -59,6 +60,10 @@ async function handleCredentialsCallback(request: Request, config: ResolvedAuthC
         return null
       },
     },
+  }
+
+  if (!userId) {
+    throw new CredentialsSignin()
   }
 
   const response = await Auth(request, config)
