@@ -2,7 +2,6 @@ import type { JWT, JWTDecodeParams, JWTEncodeParams, JWTOptions } from '@auth/co
 import type { Provider } from '@auth/core/providers'
 import type { AuthConfig, AuthConfig as AuthCoreConfig, Awaitable, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
 import type { AdapterUser } from '@auth/core/adapters'
-import { defu } from 'defu'
 import { hkdf } from '@panva/hkdf'
 import { EncryptJWT, jwtDecrypt } from 'jose'
 
@@ -97,9 +96,7 @@ export interface ResolvedAuthConfig extends Omit<AuthCoreConfig, 'raw'> {
 /**
  * Create a new {@link ResolvedAuthConfig} object.
  */
-export function defineAuthConfig<TUser>(config: AuthUserConfig<TUser>, ...defaults: AuthUserConfig<TUser>[]): ResolvedAuthConfig {
-  const options = defu(config || {}, ...defaults)
-
+export function defineAuthConfig<TUser>(options?: AuthUserConfig<TUser>): ResolvedAuthConfig {
   const SING_IN_PAGE = '/sign-in'
   const VERIFY_REQUEST_PAGE = `${SING_IN_PAGE}?verify-request`
 
