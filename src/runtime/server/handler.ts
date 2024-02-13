@@ -1,4 +1,4 @@
-import { eventHandler, toWebRequest } from 'h3'
+import { createError, eventHandler, toWebRequest } from 'h3'
 import { Auth } from '@auth/core'
 import { CredentialsSignin } from '@auth/core/errors'
 import { serialize } from 'cookie-es'
