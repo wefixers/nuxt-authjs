@@ -1,6 +1,6 @@
 import { createError, eventHandler, toWebRequest } from 'h3'
+import type { Cookie } from '@auth/core/lib/utils/cookie'
 import { Auth } from '@auth/core'
-import { CredentialsSignin } from '@auth/core/errors'
 import { serialize } from 'cookie-es'
 
 import type { ResolvedAuthConfig } from './config'
@@ -43,7 +43,7 @@ function isCredentialsCallback(req: Request) {
 }
 
 async function handleCredentialsCallback(request: Request, config: ResolvedAuthConfig) {
-  let userId: string | undefined
+  let sessionCookie: Cookie | undefined
 
   config = {
     ...config,
@@ -51,41 +51,40 @@ async function handleCredentialsCallback(request: Request, config: ResolvedAuthC
       ...config.callbacks,
 
       // patch the original jwt callback to get the user id
-      jwt({ user }) {
-        // if (!user) {
-        //   throw new CredentialsSignin()
-        // }
+      async jwt({ user }) {
+        const userId = user?.id
 
-        userId = user?.id
+        if (userId) {
+          const session = await config.adapter!.createSession!({
+            userId,
+            sessionToken: config.session.generateSessionToken(),
+            expires: new Date(Date.now() + (config.session?.maxAge || 2592000) * 1000),
+          })
+
+          sessionCookie = {
+            name: config.cookies.sessionToken.name,
+            value: session.sessionToken,
+            options: {
+              ...config.cookies.sessionToken.options,
+              expires: session.expires,
+            },
+          }
+        }
+
         return null
       },
     },
   }
 
-  if (!userId) {
-    throw new CredentialsSignin()
-  }
-
   const response = await Auth(request, config)
 
-  if (userId) {
-    const session = await config.adapter!.createSession!({
-      userId,
-      sessionToken: config.session.generateSessionToken(),
-      expires: new Date(Date.now() + (config.session?.maxAge || 2592000) * 1000),
-    })
+  // if (!sessionCookie) {
+  //   // throw new CredentialsSignin()
+  // }
 
-    const sessionCookie = {
-      name: config.cookies.sessionToken.name,
-      value: session.sessionToken,
-      options: {
-        ...config.cookies.sessionToken.options,
-        expires: session.expires,
-      },
-    }
-
+  if (sessionCookie) {
     // get all the cookies from the response, except the session cookie
-    const cookies = response.headers.getSetCookie().filter(cookie => !cookie.startsWith(`${sessionCookie.name}=`))
+    const cookies = response.headers.getSetCookie().filter(cookie => !cookie.startsWith(`${sessionCookie!.name}=`))
 
     // delete all the cookies from the response
     response.headers.delete('set-cookie')
