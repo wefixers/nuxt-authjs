@@ -24,13 +24,13 @@ async function useAuthMiddleware(event: H3Event, config: AuthPluginConfig) {
 
   const options = resolveAuthConfig(defu(userConfig, {
     secret: runtimeConfig?.session?.password,
+    pages: runtimeConfig.auth?.pages,
     cookies: {
       sessionToken: {
         name: runtimeConfig?.session?.name || `__session`,
         options: runtimeConfig?.session?.cookie as any,
       },
     },
-    pages: runtimeConfig.auth?.pages,
   }))
 
   // delete options.raw
