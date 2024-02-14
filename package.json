@@ -29,7 +29,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@auth/core": "^0.20.0",
+    "@auth/core": "^0.26.3",
     "@nuxt/kit": "^3.9.1",
     "defu": "^6.1.4",
     "pathe": "^1.1.1"
