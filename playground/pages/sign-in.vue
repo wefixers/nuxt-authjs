@@ -8,7 +8,7 @@ const { signIn, signOut } = useAuth()
 
 async function signInWithEmail() {
   await signIn('email', {
-    email: 'test@test.com',
+    email: 'test@example.com',
   })
 }
 
