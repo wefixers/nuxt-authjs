@@ -208,7 +208,6 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
     },
 
     signOut: async (options?: SignOutParams) => {
-
       const callbackUrl = options?.callbackUrl ?? window.location.href
 
       const csrf = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
