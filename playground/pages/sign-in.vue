@@ -6,6 +6,12 @@ definePageMeta({
 const { data } = useAuth()
 const { signIn, signOut } = useAuth()
 
+async function signInWithEmail() {
+  await signIn('email', {
+    email: 'test@test.com',
+  })
+}
+
 async function signInWithGoogle() {
   await signIn('google')
 }
@@ -53,6 +59,10 @@ async function trigger4042() {
 
     <button @click="signInWithGoogle">
       Sign in
+    </button>
+
+    <button @click="signInWithEmail">
+      Sign in (Email)
     </button>
 
     <button @click="() => signOut()">
