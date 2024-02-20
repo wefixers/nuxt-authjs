@@ -1,10 +1,10 @@
 import type { ComputedRef, Ref } from 'vue'
 import type { OAuthProviderType, RedirectableProviderType } from '@auth/core/providers'
+import type { Session } from '@auth/core/types'
 
 import { appendResponseHeader } from 'h3'
 
 import type { NuxtApp } from '#app/nuxt'
-import type { Session } from '#auth'
 
 import { computed, navigateTo, reloadNuxtApp, useRequestEvent, useRequestHeaders, useRouter, useState } from '#imports'
 
