@@ -1,4 +1,3 @@
-import type { PublicModuleOptions } from '../../module'
 import { defineNuxtRouteMiddleware, navigateTo, useAuth, useRuntimeConfig } from '#imports'
 
 type MiddlewareMeta = boolean | {
@@ -77,7 +76,7 @@ export default defineNuxtRouteMiddleware((to) => {
     console.warn(`[Nuxt-Auth]: Guest users cannot access: '${to.fullPath}'`)
   }
 
-  const authConfig = useRuntimeConfig().public.auth as PublicModuleOptions
+  const authConfig = useRuntimeConfig().public.auth
 
   // return signIn()
   if (authConfig?.signIn) {
