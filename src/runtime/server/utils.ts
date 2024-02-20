@@ -54,6 +54,17 @@ async function useAuthMiddleware(event: H3Event, config: AuthPluginConfig) {
         }
       }
     }
+    else if (finalProvider.type === 'email') {
+      const options = runtimeConfig.auth?.email
+      if (options) {
+        if (options.from) {
+          finalProvider.from ??= options?.from
+        }
+        if (options.server) {
+          finalProvider.server ??= options?.server
+        }
+      }
+    }
     return finalProvider
   })
 
