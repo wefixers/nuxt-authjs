@@ -1,4 +1,3 @@
-import type { PublicModuleOptions } from '../module'
 import { defineNuxtPlugin, useAuth, useRuntimeConfig } from '#imports'
 
 export default defineNuxtPlugin(async (nuxtApp) => {
@@ -13,7 +12,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   }
 
   // 2. Setup session maintenance, e.g., auto refreshing or refreshing on foux
-  const { refreshOnWindowFocus, refreshPeriodically } = useRuntimeConfig().public.auth as PublicModuleOptions || {}
+  const { refreshOnWindowFocus, refreshPeriodically } = useRuntimeConfig().public.auth || {}
 
   // Listen for when the page is visible, if the user switches tabs
   // and makes our tab visible again, re-fetch the session, but only if
