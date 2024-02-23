@@ -11,9 +11,15 @@ export interface ModuleOptions {
      * @default `/sign-in`
      */
     signIn: string
-    signOut: string
-    error: string
-    verifyRequest: string
+
+    /**
+     * @default {signIn}
+     */
+    signOut?: string
+
+    error?: string
+
+    verifyRequest?: string
   }
 
   /**
@@ -59,9 +65,9 @@ export default defineNuxtModule<ModuleOptions>({
       refreshOnWindowFocus: false,
       pages: {
         signIn: '/sign-in',
-        signOut: '/sign-out',
-        error: '/sign-in',
-        verifyRequest: '/sign-in?verify-request',
+        signOut: userOptions?.pages?.signIn ?? '/sign-in',
+        error: userOptions?.pages?.signIn ?? '/sign-in',
+        verifyRequest: `${userOptions?.pages?.signIn ?? '/sign-in'}?verify-request`,
       },
     })
 
