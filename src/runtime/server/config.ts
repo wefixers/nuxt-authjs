@@ -2,7 +2,7 @@ import type { JWT, JWTDecodeParams, JWTEncodeParams, JWTOptions } from '@auth/co
 import type { Provider } from '@auth/core/providers'
 import type { AuthConfig as AuthCoreConfig, CallbacksOptions, CookieOption, PagesOptions } from '@auth/core/types'
 import { hkdf } from '@panva/hkdf'
-import { EncryptJWT, jwtDecrypt } from 'jose'
+import { EncryptJWT, base64url, calculateJwkThumbprint, jwtDecrypt } from 'jose'
 
 export interface AuthUserConfig extends Omit<Partial<AuthCoreConfig>, 'raw'> {
   /**
@@ -227,31 +227,90 @@ export function resolveAuthConfig(options?: AuthUserConfig): ResolvedAuthConfig 
   }
 }
 
+// from: https://github.com/nextauthjs/next-auth/blob/c0eb55806d28387ef2df6ba7648c229027a1cac3/packages/core/src/jwt.ts#L187
+
+// The code is copied from Auth.js as we basically need to have access the the initialized config
+// Auth.js hide pretty much every single function away from you
+
 const DEFAULT_MAX_AGE = 30 * 24 * 60 * 60 // 30 days
 
+const now = () => (Date.now() / 1000) | 0
+
+const alg = 'dir'
+const enc = 'A256CBC-HS512'
+type Digest = Parameters<typeof calculateJwkThumbprint>[1]
+
+/** Issues a JWT. By default, the JWT is encrypted using "A256CBC-HS512". */
 export async function encode<Payload = JWT>(params: JWTEncodeParams<Payload>) {
   const { token = {}, secret, maxAge = DEFAULT_MAX_AGE, salt } = params
-  const encryptionSecret = await getDerivedEncryptionKey(secret, salt)
-  return await new EncryptJWT(token as any)
-    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+  const secrets = Array.isArray(secret) ? secret : [secret]
+  const encryptionSecret = await getDerivedEncryptionKey(enc, secrets[0], salt)
+
+  const thumbprint = await calculateJwkThumbprint(
+    { kty: 'oct', k: base64url.encode(encryptionSecret) },
+    `sha${encryptionSecret.byteLength << 3}` as Digest,
+  )
+  // @ts-expect-error `jose` allows any object as payload.
+  return await new EncryptJWT(token)
+    .setProtectedHeader({ alg, enc, kid: thumbprint })
     .setIssuedAt()
-    .setExpirationTime(((Date.now() / 1000) | 0) + maxAge)
+    .setExpirationTime(now() + maxAge)
     .setJti(crypto.randomUUID())
     .encrypt(encryptionSecret)
 }
 
+/** Decodes a Auth.js issued JWT. */
 export async function decode<Payload = JWT>(params: JWTDecodeParams): Promise<Payload | null> {
   const { token, secret, salt } = params
-  if (!token) {
-    return null
-  }
-  const encryptionSecret = await getDerivedEncryptionKey(secret, salt)
-  const { payload } = await jwtDecrypt(token, encryptionSecret, {
-    clockTolerance: 15,
-  })
+  const secrets = Array.isArray(secret) ? secret : [secret]
+  if (!token) { return null }
+  const { payload } = await jwtDecrypt(
+    token,
+    async ({ kid, enc }) => {
+      for (const secret of secrets) {
+        const encryptionSecret = await getDerivedEncryptionKey(
+          enc,
+          secret,
+          salt,
+        )
+        if (kid === undefined) { return encryptionSecret }
+
+        const thumbprint = await calculateJwkThumbprint(
+          { kty: 'oct', k: base64url.encode(encryptionSecret) },
+          `sha${encryptionSecret.byteLength << 3}` as Digest,
+        )
+        if (kid === thumbprint) { return encryptionSecret }
+      }
+
+      throw new Error('no matching decryption secret')
+    },
+    {
+      clockTolerance: 15,
+      keyManagementAlgorithms: [alg],
+      contentEncryptionAlgorithms: [enc, 'A256GCM'],
+    },
+  )
   return payload as Payload
 }
 
-async function getDerivedEncryptionKey(keyMaterial: Parameters<typeof hkdf>[1], salt: Parameters<typeof hkdf>[2]) {
-  return await hkdf('sha256', keyMaterial, salt, `Auth Encryption Key (${salt})`, 32)
+async function getDerivedEncryptionKey(enc: string, keyMaterial: Parameters<typeof hkdf>[1], salt: Parameters<typeof hkdf>[2]) {
+  let length: number
+  switch (enc) {
+    case 'A256CBC-HS512':
+      length = 64
+      break
+    case 'A256GCM':
+      length = 32
+      break
+    default:
+      throw new Error('Unsupported JWT Content Encryption Algorithm')
+  }
+
+  return await hkdf(
+    'sha256',
+    keyMaterial,
+    salt,
+    `Auth Encryption Key (${salt})`,
+    length,
+  )
 }
