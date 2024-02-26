@@ -88,6 +88,7 @@ export function defineAuthMiddleware(auth: AuthPluginConfig) {
 }
 
 export async function getSession(event: H3Event): Promise<Session | null>
+export async function getSession(event: H3Event, options?: AuthConfig): Promise<Session | null>
 export async function getSession(event: H3Event, options?: AuthConfig): Promise<Session | null> {
   options ??= event.context.$auth?.options
 
@@ -120,11 +121,13 @@ export async function getSession(event: H3Event, options?: AuthConfig): Promise<
   throw new Error(data.message)
 }
 
-export async function getServerSession(event: H3Event): Promise<Session | null> {
+export async function getServerSession(event: H3Event): Promise<Session | null>
+export async function getServerSession(event: H3Event, options?: AuthConfig): Promise<Session | null>
+export async function getServerSession(event: H3Event, options?: AuthConfig): Promise<Session | null> {
   let session = event.context.$authSession
 
   if (typeof session === 'undefined') {
-    session = await getSession(event)
+    session = await getSession(event, options)
     event.context.$authSession = session
   }
 
