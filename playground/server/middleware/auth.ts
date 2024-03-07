@@ -2,6 +2,7 @@ import Google from '@auth/core/providers/google'
 import Credentials from '@auth/core/providers/credentials'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import type { EmailConfig, EmailUserConfig } from '@auth/core/providers/email'
+import { CredentialsSignin } from '@auth/core/errors'
 
 import { prisma } from '../../server/prisma'
 
@@ -28,7 +29,7 @@ export default defineAuthMiddleware({
     Credentials({
       async authorize(credentials: any) {
         if (!credentials.email?.includes('@')) {
-          throw new Error('Invalid credentials')
+          throw new CredentialsSignin('Invalid credentials')
         }
 
         const user = await prisma.user.findFirst()
