@@ -89,7 +89,7 @@ export default defineNuxtRouteMiddleware((to) => {
       path: authConfig.signIn,
       query: {
         ...to.query,
-        error: 'SessionRequired',
+        // error: 'SessionRequired',
         callbackUrl: to.fullPath,
       },
     })
@@ -99,7 +99,7 @@ export default defineNuxtRouteMiddleware((to) => {
     path: '/api/auth/error',
     query: {
       ...to.query,
-      error: 'SessionRequired',
+      // error: 'SessionRequired',
       callbackUrl: to.fullPath,
     },
   }, {
