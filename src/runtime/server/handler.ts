@@ -1,9 +1,16 @@
-import { createError, eventHandler, toWebRequest } from 'h3'
-import type { Cookie } from '@auth/core/lib/utils/cookie'
-import { Auth } from '@auth/core'
+import { createError, eventHandler, sendRedirect, toWebRequest } from 'h3'
+import type { CookieSerializeOptions } from 'cookie-es'
 import { serialize } from 'cookie-es'
+import { Auth } from '@auth/core'
+import { isEqual, joinURL, parseURL, withQuery } from 'ufo'
 
 import type { ResolvedAuthConfig } from './config'
+
+interface Cookie {
+  name: string
+  value: string
+  options: CookieSerializeOptions
+}
 
 export default eventHandler(async (event) => {
   const options = event.context.$auth?.options
@@ -27,6 +34,14 @@ export default eventHandler(async (event) => {
     response = await handleCredentialsCallback(request, options)
   }
   else {
+    // HACK: hotfix a bug with the `error` page, in 0.28 `options.basePath` get appended to the error page breaking existing apps
+    const { pathname } = new URL(request.url)
+    const errorPage = joinURL(options.basePath, parseURL(options.pages.error).pathname)
+
+    if (isEqual(pathname, errorPage)) {
+      return sendRedirect(event, withQuery(options.pages.error, getQuery(event)))
+    }
+
     response = await Auth(request, options)
   }
 
