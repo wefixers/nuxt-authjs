@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.14
+
+[compare changes](https://github.com/wefixers/nuxt-authjs/compare/v0.0.13...v0.0.14)
+
+### 🩹 Fixes
+
+- Prevent ([7e60705](https://github.com/wefixers/nuxt-authjs/commit/7e60705))
+
+### ❤️ Contributors
+
+- Vittorio ([@Teygeta](http://github.com/Teygeta))
+
 ## v0.0.13
 
 [compare changes](https://github.com/wefixers/nuxt-authjs/compare/v0.0.12...v0.0.13)
