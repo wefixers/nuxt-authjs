@@ -188,7 +188,7 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
       })
 
       if (isCredentials && !redirect) {
-        reloadNuxtApp({ persistState: true, force: true })
+        // reloadNuxtApp({ persistState: true, force: true })
       }
 
       if (redirect || !isSupportingReturn) {
