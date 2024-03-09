@@ -1,6 +1,18 @@
 # Changelog
 
 
+## v0.0.15
+
+[compare changes](https://github.com/wefixers/nuxt-authjs/compare/v0.0.14...v0.0.15)
+
+### 🏡 Chore
+
+- Import getQuery in handler.ts ([0c85d13](https://github.com/wefixers/nuxt-authjs/commit/0c85d13))
+
+### ❤️ Contributors
+
+- Lucacicada ([@lucacicada](http://github.com/lucacicada))
+
 ## v0.0.14
 
 [compare changes](https://github.com/wefixers/nuxt-authjs/compare/v0.0.13...v0.0.14)
