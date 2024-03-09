@@ -1,4 +1,4 @@
-import { createError, eventHandler, sendRedirect, toWebRequest } from 'h3'
+import { createError, eventHandler, getQuery, sendRedirect, toWebRequest } from 'h3'
 import type { CookieSerializeOptions } from 'cookie-es'
 import { serialize } from 'cookie-es'
 import { Auth } from '@auth/core'
