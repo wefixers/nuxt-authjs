@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { defineEventHandler, toWebRequest } from 'h3'
+import { defineEventHandler, getRequestURL } from 'h3'
 
 import type { AuthConfig, Awaitable, Session } from '@auth/core/types'
 import { Auth } from '@auth/core'
@@ -100,11 +100,8 @@ export async function getSession(event: H3Event, options?: AuthConfig): Promise<
     return null
   }
 
-  const request = toWebRequest(event)
-
-  const url = new URL('/api/auth/session', request.url)
-
-  const response = await Auth(new Request(url, { headers: request.headers }), options as Omit<AuthConfig, 'raw'>)
+  const url = new URL('/api/auth/session', getRequestURL(event))
+  const response = await Auth(new Request(url, { headers: event.headers }), options as Omit<AuthConfig, 'raw'>)
 
   const { status = 200 } = response
 
