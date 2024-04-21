@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import type { OAuthProviderType, RedirectableProviderType } from '@auth/core/providers'
+import type { BuiltInProviderType } from '@auth/core/providers'
 import type { Session } from '@auth/core/types'
 
 import { appendResponseHeader } from 'h3'
@@ -8,14 +8,15 @@ import type { NuxtApp } from '#app/nuxt'
 
 import { computed, navigateTo, reloadNuxtApp, useRequestEvent, useRequestHeaders, useRouter, useState } from '#imports'
 
-interface SignInOptions extends Record<string, any> {
+interface SignOutOptions {
   callbackUrl?: string
-  redirect?: boolean
+  [key: string]: unknown
 }
 
-export interface SignOutParams<R extends boolean = true> {
+interface SignInOptions {
+  redirect?: boolean
   callbackUrl?: string
-  redirect?: R
+  [key: string]: unknown
 }
 
 declare type SignInAuthorizationParams =
@@ -76,15 +77,9 @@ export interface Auth {
 
   getSession: () => Promise<Session | null>
 
-  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions, authorizationParams?: SignInAuthorizationParams): Promise<void>
+  signIn: (providerId: BuiltInProviderType, options?: SignInOptions, authorizationParams?: SignInAuthorizationParams) => Promise<void | SignInResponse>
 
-  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions & { redirect: true }, authorizationParams?: SignInAuthorizationParams): Promise<void>
-
-  signIn<P extends RedirectableProviderType>(providerId: P, options?: SignInOptions & { redirect: false }, authorizationParams?: SignInAuthorizationParams): Promise<SignInResponse>
-
-  signIn<P extends OAuthProviderType>(providerId: P, options?: Omit<SignInOptions, 'redirect'>, authorizationParams?: SignInAuthorizationParams,): Promise<void | SignInResponse>
-
-  signOut: (options?: SignOutParams) => Promise<void>
+  signOut: (options?: SignOutOptions) => Promise<void>
 }
 
 export function useAuth(nuxtApp?: NuxtApp): Auth {
@@ -131,7 +126,7 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
         // see: https://nuxt.com/docs/getting-started/data-fetching#pass-cookies-from-server-side-api-calls-on-ssr-response
         if (process.server) {
           // If the event is handled, the headers are already sent
-          if (!event.handled) {
+          if (event && !event.handled) {
             // NOTE: getSetCookie is safe to use as we are in the server context
             // see: https://caniuse.com/?search=getSetCookie
             const cookies = res.headers.getSetCookie()
@@ -155,8 +150,8 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
       return data.value || null
     },
 
-    signIn: async (provider: string, options?: Record<string, any>, authorizationParams?: SignInAuthorizationParams): Promise<any> => {
-      const { redirect = true } = options ?? {}
+    signIn: async (provider, params, authorizationParams) => {
+      const { redirect = true, ...options } = params ?? {}
       const callbackUrl = options?.callbackUrl ?? `${window.location.origin}/`
 
       const isCredentials = provider === 'credentials'
@@ -175,7 +170,7 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
         throw new Error('CSRF token not found')
       }
 
-      const response = await $fetch<{ url?: string }>(signInUrl, {
+      const response = await $fetch<SignInResponse>(signInUrl, {
         method: 'post',
         body: new URLSearchParams({
           ...options,
@@ -207,7 +202,7 @@ export function useAuth(nuxtApp?: NuxtApp): Auth {
       return response
     },
 
-    signOut: async (options?: SignOutParams) => {
+    signOut: async (options) => {
       const callbackUrl = options?.callbackUrl ?? window.location.href
 
       const csrf = await $fetch<{ csrfToken: string }>('/api/auth/csrf')
