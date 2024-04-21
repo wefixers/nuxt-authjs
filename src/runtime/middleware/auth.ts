@@ -102,7 +102,5 @@ export default defineNuxtRouteMiddleware((to) => {
       // error: 'SessionRequired',
       callbackUrl: to.fullPath,
     },
-  }, {
-    external: true,
   })
 })
