@@ -93,12 +93,14 @@ export default defineNuxtRouteMiddleware((to) => {
     path = '/api/auth/signin'
   }
 
-  return navigateTo({
-    path,
-    query: {
-      ...to.query,
-      // error: 'SessionRequired',
-      callbackUrl: to.fullPath,
-    },
-  })
+  // return navigateTo({
+  //   path,
+  //   query: {
+  //     ...to.query,
+  //     // error: 'SessionRequired',
+  //     callbackUrl: to.fullPath,
+  //   },
+  // })
+
+  return navigateTo(path)
 })
