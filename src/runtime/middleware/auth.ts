@@ -1,4 +1,5 @@
-import { defineNuxtRouteMiddleware, navigateTo, useAuth, useRuntimeConfig } from '#imports'
+import { getRequestHost, getRequestProtocol } from 'h3'
+import { defineNuxtRouteMiddleware, navigateTo, useAuth, useRequestEvent, useRuntimeConfig } from '#imports'
 
 type MiddlewareMeta = boolean | {
   /**
@@ -78,6 +79,8 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const authConfig = useRuntimeConfig().public.auth
 
+  let path: string
+
   // return signIn()
   if (authConfig?.signIn) {
     // prevent infinite redirect loop
@@ -85,18 +88,23 @@ export default defineNuxtRouteMiddleware((to) => {
       return
     }
 
-    return navigateTo({
-      path: authConfig.signIn,
-      query: {
-        ...to.query,
-        // error: 'SessionRequired',
-        callbackUrl: to.fullPath,
-      },
-    })
+    path = authConfig.signIn
+  }
+  else {
+    path = '/api/auth/signin'
+  }
+
+  if (import.meta.server) {
+    const event = useRequestEvent()
+    if (event) {
+      const host = getRequestHost(event)
+      const protocol = getRequestProtocol(event)
+      path = String(new URL(path, `${protocol}://${host}`))
+    }
   }
 
   return navigateTo({
-    path: '/api/auth/error',
+    path,
     query: {
       ...to.query,
       // error: 'SessionRequired',
